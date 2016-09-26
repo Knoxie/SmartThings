@@ -87,16 +87,22 @@ def getClientList() {
 			  'X-Plex-Token': state.authenticationToken
 		]
 	]
-    httpGet(params) { resp ->
+ httpGet(params) { resp ->
         log.debug "Parsing plex.tv/devices.xml"
         def devices = resp.data.Device
         devices.each { thing ->    
         	thing.@provides.text().tokenize(',').each { provider ->
-            	if(provider == "player") {                
+            	if(provider == "player" || provider == "controller") {                
                 	thing.Connection.each { con ->
                         def uri = con.@uri.text()
                         def address = (uri =~ 'https?://([^:]+)')[0][1]                                           
                 		devs << ["${thing.@name.text()}|${thing.@clientIdentifier.text()}|${address}":"${thing.@name.text()}"]
+                	}
+                }else if(provider == "server"){
+                	thing.Connection.each { con ->
+                        def uri = con.@uri.text()
+                        def address = (uri =~ 'https?://([^:]+)')[0][1]                                           
+                		devs << ["${thing.@name.text()}[Server ${uri}|${thing.@clientIdentifier.text()}|${address}":"${thing.@name.text()}[Server${uri}]"]
                 	}
                 }
             }
